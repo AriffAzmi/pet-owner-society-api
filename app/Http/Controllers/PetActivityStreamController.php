@@ -17,8 +17,25 @@ class PetActivityStreamController extends Controller
 {
     public function listPetStreams()
     {
-        $listPetStreams = PetActivityStream::with('images')
-        ->get();
+        // $listPetStreams = PetActivityStream::with('images')
+        // ->get();
+
+        $listPetStreams = DB::select('
+            SELECT 
+                a.username as post_by,
+                b.title,
+                b.description,
+                b.updated_at,
+                c.photo_name
+            FROM
+                users a,
+                pet_activity_streams b,
+                activity_stream_photos c
+            WHERE
+                a.id=b.user_id
+                AND
+                b.id=c.pet_activity_stream_id'
+        );
 
         $message = "";
 
@@ -29,6 +46,11 @@ class PetActivityStreamController extends Controller
         else {
 
             $message = "No pet streams created yet";
+        }
+
+        foreach ($listPetStreams as $petStream) {
+            
+            $petStream->photo_path = env("APP_URL")."/public/stream_image_uploaders/".$petStream->photo_name;
         }
 
         return response()->json([
@@ -93,16 +115,30 @@ class PetActivityStreamController extends Controller
                 
                 $images = $request->file('images');
 
-                foreach ($images as $image) {
-                    
-                    $image_name = uniqid().".".strtolower($image->getClientOriginalExtension());
+                if (count($images) > 1) {
+
+                    foreach ($images as $image) {
+                        
+                        $image_name = uniqid().".".strtolower($image->getClientOriginalExtension());
+
+                        $activityStreamPhoto = new ActivityStreamPhoto();
+                        $activityStreamPhoto->pet_activity_stream_id = $petActivityStream->id;
+                        $activityStreamPhoto->photo_name = $image_name;
+                        $activityStreamPhoto->save();
+
+                        $image->move(pet_stream_image_path()."/",$image_name);
+                    }
+                }
+                else {
+
+                    $image_name = uniqid().".".strtolower($images->getClientOriginalExtension());
 
                     $activityStreamPhoto = new ActivityStreamPhoto();
                     $activityStreamPhoto->pet_activity_stream_id = $petActivityStream->id;
                     $activityStreamPhoto->photo_name = $image_name;
                     $activityStreamPhoto->save();
 
-                    $image->move(pet_stream_image_path()."/",$image_name);
+                    $images->move(pet_stream_image_path()."/",$image_name);
                 }
             }
 

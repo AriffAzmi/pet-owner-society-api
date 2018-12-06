@@ -161,7 +161,7 @@ class UserController extends BaseController
     {
         $validator = Validator::make($request->all(), [
             'username'  => 'required|unique:users',
-            'password'  => 'sometimes|required'
+            'password'  => 'sometimes|required|confirmed'
         ]);
         
         if ($validator->fails()) { 
