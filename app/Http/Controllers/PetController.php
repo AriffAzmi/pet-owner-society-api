@@ -29,6 +29,12 @@ class PetController extends Controller
 			$message = "You have no pet record at the moment";
 		}
 
+		foreach ($pets as $pet) {
+			
+			$pet->type = $this->getPetType($pet->type);
+			$pet->colour = $this->getPetColour($pet->colour);
+		}
+
 		return response()->json([
             'status' => true,
             'message' => $message,
@@ -56,18 +62,33 @@ class PetController extends Controller
 
         try {
         	
-	        $pet = new Pet();
-	        $pet->user_id = $request->auth->id;
-	        $pet->type = $request->type;
-	        $pet->colour = $request->colour;
-	        $pet->qty = $request->quantity;
-	        $pet->save();
+        	$checkDuplicate = Pet::where('type',$request->type)
+        	->where('user_id',$request->auth->id)
+        	->count();
 
-	        return response()->json([
-	            'status' => true,
-	            'message' => 'New pet record successfully created',
-	            'errors' => ''
-	        ], 200);
+        	if ($checkDuplicate > 0) {
+        		
+        		return response()->json([
+		            'status' => false,
+		            'message' => 'Duplicate record.',
+		            'errors' => ''
+		        ], 409);
+        	}
+        	else {
+
+		        $pet = new Pet();
+		        $pet->user_id = $request->auth->id;
+		        $pet->type = $request->type;
+		        $pet->colour = $request->colour;
+		        $pet->qty = $request->quantity;
+		        $pet->save();
+
+		        return response()->json([
+		            'status' => true,
+		            'message' => 'New pet record successfully created',
+		            'errors' => ''
+		        ], 200);
+        	}
 
         } catch (Exception $e) {
         	
@@ -77,6 +98,31 @@ class PetController extends Controller
                 'errors' => $e
             ], 500);
         }
+	}
+
+	public function showPet($id=null,Request $request)
+	{
+		try {
+			
+			$pet = Pet::where('user_id',$request->auth->id)
+			->where('id',$id)
+			->firstOrFail();
+
+			return response()->json([
+	            'status' => true,
+	            'message' => "Pet details successfully retrieved",
+	            'data' => $pet,
+	            'errors' => ''
+	        ], 200);
+
+		} catch (ModelNotFoundException $e) {
+			
+			return response()->json([
+	            'status' => true,
+	            'message' => $e->getMessage(),
+	            'errors' => $e
+	        ], 404);
+		}
 	}
 
 	public function updatePet($id=null,Request $request)
@@ -165,6 +211,56 @@ class PetController extends Controller
 		}
 		else {
 
+		}
+	}
+
+	public function getPetType($type=1)
+	{
+		switch ($type) {
+			case 1:
+				return "Bats";
+				break;
+			
+			case 2:
+				return "Cats";
+				break;
+			
+			case 3:
+				return "Dog";
+				break;
+			
+			case 4:
+				return "Elephants";
+				break;
+			
+			case 5:
+				return "Giraffes";
+				break;
+			
+			case 6:
+				return "Horses";
+				break;
+		}
+	}
+
+	public function getPetColour($colour=1)
+	{
+		switch ($colour) {
+			case 1:
+				return "Black";
+				break;
+			
+			case 2:
+				return "Yellow";
+				break;
+			
+			case 3:
+				return "Green";
+				break;
+			
+			case 4:
+				return "White";
+				break;
 		}
 	}
 }

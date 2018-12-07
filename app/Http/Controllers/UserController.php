@@ -160,8 +160,7 @@ class UserController extends BaseController
     public function updateProfile(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'username'  => 'required|unique:users',
-            'password'  => 'sometimes|required|confirmed'
+            'username'  => 'required|unique:users'
         ]);
         
         if ($validator->fails()) { 
@@ -180,8 +179,23 @@ class UserController extends BaseController
 
             if ($request->exists('password')) {
                 
+                $validator = Validator::make($request->all(), [
+                    'password'  => 'confirmed|min:5'
+                ]);
+                
+                if ($validator->fails()) { 
+                    
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'Validation error',
+                        'errors' => $validator->errors()
+                    ], 412);    
+                }
+
                 $user->password = Hash::make($request->password);
             }
+
+            $user->save();
 
             return response()->json([
                 'status' => true,

@@ -48,7 +48,7 @@ $router->group(
 		*/
     	$router->get('pets','PetController@listPets');
     	$router->post('pet','PetController@createPet');
-    	$router->get('pet/{id}','PetController@createPet');
+    	$router->get('pet/{id}','PetController@showPet');
     	$router->put('pet/{id}/update','PetController@updatePet');
     	$router->delete('pet/{id}/delete','PetController@deletePet');
 
